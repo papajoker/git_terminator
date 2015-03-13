@@ -38,17 +38,55 @@ class GitPlugin(plugin.MenuItem):
         print 'mon dossier: ' + gitpath
         
         if os.path.exists(gitpath):
+            #item = gtk.MenuItem('Git Status')
+            #menuitems.append(item)
+            #item.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git status' })
+            #dbg('Menu items git appended')
+            
             item = gtk.MenuItem('Git')
             menuitems.append(item)
-            ##menuitems.connect("activate", self._execute, terminal)
-            item.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git status' })
-            dbg('Menu items git appended')
+            submenu = gtk.Menu()
+            item.set_submenu(submenu)
+            
+            menuitem = gtk.MenuItem('Status')
+            submenu.append(menuitem)
+            menuitem.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git status' })
+            menuitem = gtk.SeparatorMenuItem()
+            submenu.append(menuitem)
+            
+            myBranche = subprocess.check_output(['git', 'symbolic-ref','HEAD', '--short']) 
+            menuitem = gtk.MenuItem('Branches')
+            submenu.append(menuitem)
+            #menuitem.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git branch -a' })
+            myBranches = subprocess.check_output(['git', 'branch']).split('\n')
+            
+            ssubmenu = gtk.Menu()
+            menuitem.set_submenu(ssubmenu)
+
+            for element in myBranches:
+                if len(element)>1:
+                    smenuitem = gtk.MenuItem(element)
+                    ssubmenu.append(smenuitem)
+                    smenuitem.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git checkout '+element.replace('* ','') })
+            menuitem = gtk.SeparatorMenuItem()
+            ssubmenu.append(menuitem)
+            menuitem = gtk.MenuItem('List Branches')
+            ssubmenu.append(menuitem)
+            menuitem.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git branch -a' })
+                
+            
+            menuitem = gtk.MenuItem('Logs')
+            menuitem.connect("activate", self._execute, {'terminal' : terminal, 'command' : 'git log --oneline -n 6' })
+            submenu.append(menuitem)
+            
+            
         else:
             dbg('Menu items git remove')
             
     def _execute(self, _widget, data):
         command = data['command']+"\n"
         terminal = data['terminal']
-        print 'execution ? de ' + command
+        #print 'exec: ?  ' + command
         terminal.feed(command)
         return command
+
